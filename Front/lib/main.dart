@@ -75,8 +75,8 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       String response;
       await Future.wait([
-        http.get('http://192.168.1.3:1337/api/current').then((res) {
-          response = 'http://192.168.1.3:12345/' + res.body;
+        http.get('http://achiever.gg/api/current').then((res) {
+          response = 'http://achiever.gg/img/' + res.body;
         }), 
         Future.delayed(Duration(seconds: 1))]);
       return response;
