@@ -54,7 +54,7 @@ namespace Jobs
 
         private void StartJobs(IHorarium horarium)
         {
-            horarium.CreateRecurrent<DailyPekaJob>(Cron.MinuteInterval(10)).Schedule().Wait();
+            horarium.CreateRecurrent<DailyPekaJob>(Cron.Daily(11, 43)).Schedule().Wait();
             //horarium.CreateRecurrent<DailyPekaJob>(Cron.Daily(13, 37)).Schedule().Wait();
         }
 

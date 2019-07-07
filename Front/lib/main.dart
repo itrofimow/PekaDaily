@@ -44,7 +44,10 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final _firebaseMessaging = FirebaseMessaging();
-  String _pekaUrl;
+  
+  bool loaded = false;
+  bool failed = false;
+  Image image;
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +74,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Future<String> getPekaAddr() async {
+  Future loadPeka() async {
     try {
       String response;
       await Future.wait([
@@ -79,26 +82,34 @@ class _MyHomePageState extends State<MyHomePage> {
           response = 'http://achiever.gg/img/' + res.body;
         }), 
         Future.delayed(Duration(seconds: 1))]);
-      return response;
+
+      image = Image.network(response);
+      image.image.resolve(ImageConfiguration()).addListener((i, b) {
+        if (mounted) {
+          setState(() {
+            loaded = true;
+          });
+        }
+      });
     }
     catch (e) {
-      return '_failed';
+      if (mounted) {
+        setState(() {
+          failed = true;
+        });
+      }
     }
   }
 
   Future resetPeka() async {
     if (mounted) {
       setState(() {
-        _pekaUrl = null;
+        loaded = false;
+        failed = false;
       });
     }
-
-    final pekaUrl = await getPekaAddr();
-    if (mounted) {
-      setState(() {
-        _pekaUrl = pekaUrl;
-      });
-    } 
+    
+    await loadPeka();
   }
 
   @override
@@ -126,37 +137,31 @@ class _MyHomePageState extends State<MyHomePage> {
     _firebaseMessaging.getToken().then((val) {
       print(val);
     });
-
-    getPekaAddr().then((res) {
-      if (mounted) {
-        setState(() {
-          _pekaUrl = res;
-        });
-      }
-    });
+    
+    resetPeka();
   }
 
   Widget _buildPeka() {
+    Widget _image = Container();
+    
+    if (failed) _image = Image.asset('assets/1.png', 
+      width: 200, 
+      height: 200);
+
+    if (!failed && loaded) _image = image;
+
     return Container(
       height: 200,
       width: 200,
       color: Colors.transparent,
-      child: _pekaUrl == null
-        ? Container()
-        : _pekaUrl == '_failed'
-          ? Image.asset('assets/1.png', 
-            width: 200, 
-            height: 200)
-          : Image.network(_pekaUrl,
-            width: 200, 
-            height: 200,)
+      child: image
     );
   }
 
   Widget _buildText() {
     return Container(
       margin: EdgeInsets.only(top: 25),
-      child: _pekaUrl == null
+      child: !loaded
         ? Text('peka incoming...')
         : Text('Today\'s Peka', style: const TextStyle(
           fontWeight: FontWeight.w700,
