@@ -75,8 +75,10 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       String response;
       await Future.wait([
-        http.get('http://192.168.1.3:1337/api/current').then((res) => response = res.body), 
-        Future.delayed(Duration(seconds: 2))]);
+        http.get('http://192.168.1.3:1337/api/current').then((res) {
+          response = 'http://192.168.1.3:12345/' + res.body;
+        }), 
+        Future.delayed(Duration(seconds: 1))]);
       return response;
     }
     catch (e) {
@@ -84,20 +86,33 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  Future resetPeka() async {
+    if (mounted) {
+      setState(() {
+        _pekaUrl = null;
+      });
+    }
+
+    final pekaUrl = await getPekaAddr();
+    if (mounted) {
+      setState(() {
+        _pekaUrl = pekaUrl;
+      });
+    } 
+  }
+
   @override
   void initState() {
     super.initState();
 
     _firebaseMessaging.configure(
-      onMessage: (Map<String, dynamic> message) async {
-        print("onMessage: $message");
-      },
+      onMessage: (Map<String, dynamic> message) => resetPeka(),
       onLaunch: (Map<String, dynamic> message) async {
         print("onLaunch: $message");
       },
-      onResume: (Map<String, dynamic> message) async {
-        print("onResume: $message");
-      },
+      onResume: (Map<String, dynamic> message) {
+        return resetPeka();
+      }
     );
     _firebaseMessaging.requestNotificationPermissions(
         const IosNotificationSettings(sound: true, badge: true, alert: true));

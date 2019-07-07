@@ -2,6 +2,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace Jobs.Models
 {
+    [MongoEntity("counter")]
     public class Counter
     {
         [BsonId]

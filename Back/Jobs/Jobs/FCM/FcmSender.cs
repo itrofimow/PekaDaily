@@ -31,6 +31,7 @@ namespace Jobs.FCM
                 var notification = new Notification
                 {
                     Title = "New Peka is out!",
+                    Body = ":peka:"
                 };
                 
                 var message = new Message
@@ -49,7 +50,7 @@ namespace Jobs.FCM
         
         private void AddRequiredDataProperties(Dictionary<string, string> data)
         {
-            data["action"] = "FLUTTER_NOTIFICATION_CLICK";
+            data["click_action"] = "FLUTTER_NOTIFICATION_CLICK";
         }
     }
 }

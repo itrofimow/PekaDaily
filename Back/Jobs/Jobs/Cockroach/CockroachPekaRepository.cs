@@ -10,7 +10,7 @@ namespace Jobs.Cockroach
     
     public class CockroachPekaRepository : ICockroachPekaRepository
     {
-        private const string ConnectionString = "host=localhost;port=26257;user=root";
+        private const string ConnectionString = "Server=localhost; Port=26257; Database=defaultdb; User Id=root";
         
         public async Task SetPeka(string url)
         {

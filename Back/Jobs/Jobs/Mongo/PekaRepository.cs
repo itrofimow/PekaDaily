@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Jobs.Models;
 using MongoDB.Driver;
@@ -9,6 +10,8 @@ namespace Jobs.Mongo
         Task<bool> CheckCounter(int counter);
 
         Task<Peka> GetPeka(int counter);
+
+        Task AddPekas(List<Peka> pekas);
     }
     
     public class PekaRepository : IPekaRepository
@@ -32,6 +35,12 @@ namespace Jobs.Mongo
             return _context.For<Peka>()
                 .Find(x => x.Counter == counter)
                 .SingleOrDefaultAsync();
+        }
+
+        public Task AddPekas(List<Peka> pekas)
+        {
+            return _context.For<Peka>()
+                .InsertManyAsync(pekas);
         }
     }
 }

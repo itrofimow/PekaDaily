@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Horarium.Interfaces;
 using Jobs.Cockroach;
@@ -28,14 +29,15 @@ namespace Jobs.Jobs
         public async Task Execute()
         {
             var counter = await _counterRepository.GetCurrent();
-            if (!await _pekaRepository.CheckCounter(counter++))
+            if (!await _pekaRepository.CheckCounter(counter + 1))
                 return;
+            ++counter;
 
             await _counterRepository.IncrementCurrent();
             var newPeka = await _pekaRepository.GetPeka(counter);
 
             await _cockroachPekaRepository.SetPeka(newPeka.Url);
-            
+
             await _fcmSender.SendNewPeka();
         }
     }
