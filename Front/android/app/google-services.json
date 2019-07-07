@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "291452833451",
+    "firebase_url": "https://pekadaily.firebaseio.com",
+    "project_id": "pekadaily",
+    "storage_bucket": "pekadaily.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:291452833451:android:4adde039b4323f0a",
+        "android_client_info": {
+          "package_name": "com.achiever.peka"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "291452833451-6u4vfl59utj7iostpoicfamfjg6fbgf9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAjfpOmtFtQmwiuFEU-baGtfRQ6TbP1x8s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "291452833451-6u4vfl59utj7iostpoicfamfjg6fbgf9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
