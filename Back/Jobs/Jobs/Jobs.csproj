@@ -11,10 +11,19 @@
         <PackageReference Include="Horarium.Mongo" Version="1.0.0-alpha9" />
         <PackageReference Include="Microsoft.AspNetCore.App" />
         <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
+        <PackageReference Include="MongoDB.Driver" Version="2.8.1" />
+        <PackageReference Include="Npgsql" Version="4.0.7" />
     </ItemGroup>
 
     <ItemGroup>
       <_ContentIncludedByDefault Remove="Properties\launchSettings.json" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Update="pekadaily-firebase-adminsdk.json">
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 
 </Project>
