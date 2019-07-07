@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/services.dart';
 
-void main() => runApp(MyApp());
+void main() {;
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+    systemNavigationBarColor: Color.fromRGBO(255, 191, 0, 1)
+  ));
+
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -53,15 +60,24 @@ class _MyHomePageState extends State<MyHomePage> {
             end: Alignment.bottomRight
           ),
         ),
-        child: Center(child: _buildPeka()),
+        child: Center(child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildPeka(),
+            _buildText()
+          ])
+        ),
       )
     );
   }
 
   Future<String> getPekaAddr() async {
     try {
-      final response = await http.get('http://192.168.1.3:1337/api/current');
-      return response.body;
+      String response;
+      await Future.wait([
+        http.get('http://192.168.1.3:1337/api/current').then((res) => response = res.body), 
+        Future.delayed(Duration(seconds: 2))]);
+      return response;
     }
     catch (e) {
       return '_failed';
@@ -119,6 +135,20 @@ class _MyHomePageState extends State<MyHomePage> {
           : Image.network(_pekaUrl,
             width: 200, 
             height: 200,)
+    );
+  }
+
+  Widget _buildText() {
+    return Container(
+      margin: EdgeInsets.only(top: 25),
+      child: _pekaUrl == null
+        ? Text('peka incoming...')
+        : Text('Today\'s Peka', style: const TextStyle(
+          fontWeight: FontWeight.w700,
+          fontSize: 34,
+          letterSpacing: 0.41,
+          color: Color.fromRGBO(51, 51, 51, 1)
+        ))
     );
   }
 }

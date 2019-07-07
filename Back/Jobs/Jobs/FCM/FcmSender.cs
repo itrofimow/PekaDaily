@@ -17,7 +17,7 @@ namespace Jobs.FCM
         {
             FirebaseApp.Create(new AppOptions
             {
-                Credential = GoogleCredential.FromFile("asd")
+                Credential = GoogleCredential.FromFile("pekadaily-firebase-adminsdk.json")
             });
         }
         
