@@ -1,16 +1,25 @@
-use actix_web::{web, Error, error::ErrorInternalServerError};
-use futures::future::{ok, Future};
+use actix_web::{error::ErrorInternalServerError, web, App, Error, HttpServer};
+use futures::future::{lazy, ok, Future};
 use futures::stream::Stream;
+use std::sync::Arc;
+use tokio::runtime::current_thread::Runtime;
+use tokio_postgres::SimpleQueryMessage::Row;
 use tokio_postgres::{error::Error as DbError, Client, NoTls};
 
-#[derive(Clone)]
+use bb8::Pool;
+use bb8_postgres::PostgresConnectionManager;
+
 struct PekaRepository {
+    pool: Pool<PostgresConnectionManager<NoTls>>,
     connection_string: &'static str,
 }
 
 impl PekaRepository {
-    fn new(connection_string: &'static str) -> Self {
-        PekaRepository { connection_string }
+    fn new(pool: Pool<PostgresConnectionManager<NoTls>>, connection_string: &'static str) -> Self {
+        PekaRepository {
+            pool,
+            connection_string,
+        }
     }
 
     fn get_client(&self) -> impl Future<Item = Client, Error = DbError> {
@@ -33,26 +42,43 @@ impl PekaRepository {
 
     fn test(&self) -> impl Future<Item = String, Error = DbError> {
         self.get_client()
-            .and_then(|mut client| {
-                client.simple_query("SHOW DATABASES;").collect()
+            .and_then(|mut client| client.simple_query("select peka from peka;").collect())
+            .then(|db_res| {
+                let res = db_res.unwrap();
+                let str = match &res[0] {
+                    Row(row) => match row.get(0).take() {
+                        None => panic!(),
+                        Some(val) => val,
+                    },
+                    _ => panic!(),
+                };
+                ok::<String, DbError>(String::from(str))
             })
-            .then(|_| ok::<String, DbError>(String::from("asdasd")))
     }
 }
 
-fn get_current_peka(repo: web::Data<PekaRepository>) -> Box<Future<Item = String, Error = Error>> {
-    Box::new(
-        repo.test()
-        .map_err(|e| {
-            println!("error! {}", e);
-            ErrorInternalServerError(e)
-        }))
+fn get_current_peka(
+    repo: web::Data<Arc<PekaRepository>>,
+) -> Box<Future<Item = String, Error = Error>> {
+    Box::new(repo.test().map_err(|e| {
+        println!("error! {}", e);
+        ErrorInternalServerError(e)
+    }))
 }
 
 fn main() {
-    let peka_repo = PekaRepository::new("host=localhost port=26257 user=root");
+    let connection_manager =
+        PostgresConnectionManager::new("postgresql://root@localhost:26257", NoTls);
 
-    use actix_web::{App, HttpServer};
+    let mut rt = Runtime::new().unwrap();
+    let pool = rt.block_on(lazy(|| {
+        Pool::builder()
+            .max_size(100)
+            .build(connection_manager)
+            .map_err(|e| panic!(e))
+    })).unwrap();
+        
+    let peka_repo = Arc::new(PekaRepository::new(pool, "host=localhost port=26257 user=root"));
     let server = HttpServer::new(move || {
         App::new()
             .data(peka_repo.clone())
@@ -62,6 +88,6 @@ fn main() {
     .unwrap();
 
     println!("listening on *:1337");
-
+    
     server.run().unwrap();
 }
