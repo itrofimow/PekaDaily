@@ -3,6 +3,9 @@ name = "api"
 version = "0.1.0"
 authors = ["itrofimow <i.trofimow@yandex.ru>"]
 edition = "2018"
+[[bin]]
+name = "api"
+path = "src/main.rs"
 
 [dependencies]
 actix = "0.8.3"
