@@ -20,7 +20,8 @@ COPY . /build
 # Now this only builds our changes to things like src
 RUN cargo build --release
 
-FROM rust:1.36-slim as runtime
+FROM ubuntu
+RUN apt-get update && apt-get -y install ca-certificates libssl-dev && rm -rf /var/lib/apt/lists/*
 WORKDIR app
 COPY --from=builder build/target/release/api .
 ENTRYPOINT ["./api"]
