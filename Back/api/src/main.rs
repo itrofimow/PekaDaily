@@ -1,75 +1,48 @@
-use actix_web::{error::ErrorInternalServerError, web, App, Error, HttpServer};
-use futures::future::{lazy, ok, err, Future};
-use futures::stream::Stream;
+use mobc::runtime::DefaultExecutor;
+use mobc::Error;
+use mobc::Pool;
+use mobc_postgres::PostgresConnectionManager;
+use std::str::FromStr;
 use std::sync::Arc;
-use tokio::runtime::current_thread::Runtime;
-use tokio_postgres::SimpleQueryMessage::Row;
-use tokio_postgres::{error::Error as DbError, Client, NoTls};
+use tokio_postgres::Config;
+use tokio_postgres::Error as PostgresError;
+use tokio_postgres::NoTls;
+use actix_web::{HttpServer, App, web, Responder, get};
 
-use bb8::Pool;
-use bb8_postgres::PostgresConnectionManager;
+type CockroachPool = Pool<PostgresConnectionManager<NoTls, DefaultExecutor>>;
 
-struct PekaRepository {
-    pool: Pool<PostgresConnectionManager<NoTls>>
+async fn build_pool() -> Result<CockroachPool, Error<PostgresError>> {
+    let config = Config::from_str("postgresql://root@localhost:26257")?;
+    let manager = PostgresConnectionManager::new(config, NoTls);
+
+    Ok(Pool::builder().max_size(200).build(manager).await?)
 }
 
-impl PekaRepository {
-    fn new(pool: Pool<PostgresConnectionManager<NoTls>>) -> Self {
-        PekaRepository {
-            pool
-        }
-    }
+async fn get_current_peka(pool: Arc<CockroachPool>) -> Result<String, Error<PostgresError>> {
+	let conn = pool.get().await?;
+	let r = conn.query("select peka from peka", &[]).await?;
+	let value: &str = r[0].get(0);
 
-    fn get_current_peka(&self) -> impl Future<Item = String, Error = DbError> {
-        self.pool.run(|mut connection: Client| {
-            connection.simple_query("select peka from peka;").collect().then(move |r| {
-                match r {
-                    Ok(res) => match &res[0] {
-                        Row(row) => match row.get(0).take() {
-                            None => panic!(),
-                            Some(val) => ok((String::from(val), connection))
-                        },
-                        _ => panic!()
-                    },
-                    Err(e) => err((e, connection))
-                }
-            })
-        })
-        .map_err(|_| panic!())
-    }
+	Ok(String::from(value))
 }
 
-fn get_current_peka(
-    repo: web::Data<Arc<PekaRepository>>,
-) -> Box<Future<Item = String, Error = Error>> {
-    Box::new(repo.get_current_peka().map_err(|e| {
-        println!("error! {}", e);
-        ErrorInternalServerError(e)
-    }))
+#[get("/api/current")]
+async fn current_peka(pool: web::Data<CockroachPool>) -> impl Responder {
+	let result = get_current_peka(pool.into_inner()).await;
+	match result {
+		Ok(data) => data,
+		Err(_) => String::from("internal server error")
+	}
 }
 
-fn main() {
-    let connection_manager =
-        PostgresConnectionManager::new("postgresql://root@localhost:26257", NoTls);
+#[actix_rt::main]
+async fn main() -> std::io::Result<()> {
+    let pool = build_pool().await.unwrap();
 
-    let mut rt = Runtime::new().unwrap();
-    let pool = rt.block_on(lazy(|| {
-        Pool::builder()
-            .max_size(100)
-            .build(connection_manager)
-            .map_err(|e| panic!(e))
-    })).unwrap();
-        
-    let peka_repo = Arc::new(PekaRepository::new(pool));
-    let server = HttpServer::new(move || {
-        App::new()
-            .data(peka_repo.clone())
-            .route("/api/current", web::get().to_async(get_current_peka))
-    })
-    .bind("0.0.0.0:1337")
-    .unwrap();
-
-    println!("listening on *:1337");
-    
-    server.run().unwrap();
+	HttpServer::new(move || {
+		App::new().data(pool.clone()).service(current_peka)
+	})
+	.bind("0.0.0.0:1337")?
+	.start()
+	.await
 }

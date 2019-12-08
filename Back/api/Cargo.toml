@@ -1,17 +1,15 @@
 [package]
 name = "api"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["itrofimow <i.trofimow@yandex.ru>"]
 edition = "2018"
-[[bin]]
-name = "api"
-path = "src/main.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-actix = "0.8.3"
-actix-web = "1.0.3"
-futures = "0.1"
-tokio = "0.1"
-tokio-postgres = "0.4.0-rc.3"
-bb8 = "0.3.0"
-bb8-postgres = "0.3.0"
+actix-web = "2.0.0-alpha.3"
+actix-rt = "1.0.0-alpha.3"
+mobc-postgres = "0.3.1"
+mobc = "0.3.1"
+tokio = { version = "0.2", features = ["full"] }
+tokio-postgres = "0.5.0-alpha.2"
