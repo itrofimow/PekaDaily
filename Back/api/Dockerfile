@@ -1,4 +1,4 @@
-FROM rust:1.36 as builder
+FROM rust:1.39 as builder
 WORKDIR build
 # We'll get to what this file is below!
 COPY dummy.rs /build
